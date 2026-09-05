@@ -1,0 +1,29 @@
+id = "youguanxinqing.herdr-hop"
+name = "Herdr Hop"
+version = "0.1.0"
+min_herdr_version = "0.8.2"
+description = "Hop to any visible pane by pressing a labeled key, drawn as native Kitty-graphics overlays"
+platforms = ["linux", "macos"]
+
+[[build]]
+command = ["./scripts/build.sh"]
+
+[[actions]]
+id = "jump"
+title = "Hop: jump to a visible pane by label"
+contexts = ["pane", "tab", "workspace"]
+command = ["./bin/herdr-hop", "jump"]
+
+# The picker runs inside a small focused popup: it owns the keyboard for one keystroke while the
+# labels it paints live on the real panes as graphics overlays. Herdr always borders a popup and
+# clamps it to a 6x4 minimum; the box stays blank and minimum-sized (drawing into it flickered).
+# The title is a zero-width space: any real text truncates to "X⋯" on a 6-cell border, and this is
+# the known way to render no title at all (herdr-easymotion ships the same). Size is set on the
+# CLI open in the action.
+[[panes]]
+id = "picker"
+title = "\u200B"
+placement = "popup"
+width = 0
+height = 0
+command = ["./bin/herdr-hop", "pick"]

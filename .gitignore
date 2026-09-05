@@ -1,0 +1,7 @@
+/target
+/bin
+.DS_Store
+.mdcomments
+.env
+.env.*
+!.env.example
