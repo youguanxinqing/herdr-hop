@@ -4,6 +4,8 @@
 
 Herdr Hop 是开源插件 [Herdr EasyMotion](https://github.com/elliotekj/herdr-easymotion) 的独立 Rust 实现。原项目由 [Elliot Jackson](https://github.com/elliotekj) 创建，本项目保留了它的窗格直达交互：触发动作后，每个可见窗格上会显示一个大号标签；按下对应标签，即可直接聚焦目标窗格。
 
+![Herdr Hop 在两个可见窗格上显示用于键盘直达的编号标签](assets/herdr-hop-demo.png)
+
 标签按视觉阅读顺序分配——从上到下、从左到右——依次使用 `1` 到 `9`，然后是 `a` 到 `g`。只要布局不变，标签也会保持稳定，便于形成肌肉记忆。
 
 ## 终端支持

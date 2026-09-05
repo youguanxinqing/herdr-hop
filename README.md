@@ -4,6 +4,8 @@
 
 Herdr Hop is an independent Rust reimplementation of [Herdr EasyMotion](https://github.com/elliotekj/herdr-easymotion), the open-source plugin created by [Elliot Jackson](https://github.com/elliotekj). It preserves the original plugin's direct pane-jump workflow: invoke the action, read the large label drawn over each visible pane, then press that label to focus the pane.
 
+![Herdr Hop labeling two visible panes for direct keyboard selection](assets/herdr-hop-demo.png)
+
 Labels follow visual reading order—top to bottom, then left to right—and use `1` through `9`, followed by `a` through `g`. A stable layout therefore keeps stable, learnable labels.
 
 ## Terminal support

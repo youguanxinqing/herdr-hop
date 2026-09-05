@@ -4,6 +4,8 @@
 
 Herdr Hop は、[Elliot Jackson](https://github.com/elliotekj) が開発したオープンソースプラグイン [Herdr EasyMotion](https://github.com/elliotekj/herdr-easymotion) を Rust で独自に再実装したものです。元のプラグインと同じく、アクションを起動すると各表示ペインに大きなラベルが描画され、そのラベルのキーを押すだけで対象のペインへ直接フォーカスできます。
 
+![Herdr Hop が 2 つの表示ペインにキーボード選択用の番号ラベルを表示している様子](assets/herdr-hop-demo.png)
+
 ラベルは画面上の読み順、つまり上から下、左から右の順に割り当てられます。使用するキーは `1` から `9`、続いて `a` から `g` です。レイアウトが変わらなければラベルも安定するため、キー配置を覚えて素早く移動できます。
 
 ## 対応ターミナル
