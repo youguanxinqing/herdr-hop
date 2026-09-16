@@ -40,10 +40,21 @@ Once graphics are enabled, Herdr Hop measures cell geometry through its own pick
 
 ## Requirements
 
-- Herdr 0.8.2 or newer
+- Herdr **0.9.0 recommended**; minimum supported version: **0.8.2**
 - Linux or macOS
 - A compatible Kitty-graphics terminal, as described above
 - Rust and Cargo (installation currently builds the plugin from source)
+
+As of 2026-09-16, Herdr **0.9.0 (both client and server)** is the primary tested version.
+Hop **0.1.1** fixes a popup cell-size query timeout on this version. In local warm-launch
+measurements, popup launch through cell-size acquisition fell from 171–174 ms to 23–29 ms;
+these figures do not measure the full keybinding-to-display latency.
+
+Minimum compatibility remains 0.8.2. Its zero-delta resize behavior was checked in source,
+and regression tests cover the fallback when the optional refresh fails; this release has
+not been benchmarked end to end on 0.8.2. Each picker launch adds one local socket request.
+Multi-client behavior has not been validated for this release. See the
+[diagnosis and tested scope](docs/bugs/herdr-0.9-popup-latency.md).
 
 ## Install
 

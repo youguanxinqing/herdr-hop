@@ -1,6 +1,6 @@
 id = "youguanxinqing.herdr-hop"
 name = "Herdr Hop"
-version = "0.1.0"
+version = "0.1.1"
 min_herdr_version = "0.8.2"
 description = "Hop to any visible pane by pressing a labeled key, drawn as native Kitty-graphics overlays"
 platforms = ["linux", "macos"]

@@ -55,6 +55,15 @@ impl HerdrClient {
         serde_json::from_value(layout).context("failed to decode layout snapshot")
     }
 
+    /// Reconciles host and popup geometry without changing the source pane's split ratio.
+    pub fn refresh_geometry(&self, pane_id: &str) -> Result<()> {
+        self.call(
+            "pane.resize",
+            json!({ "pane_id": pane_id, "direction": "right", "amount": 0.0 }),
+        )
+        .map(|_| ())
+    }
+
     /// Paints one overlay onto its pane.
     pub fn graphics_set(&self, overlay: &Overlay) -> Result<()> {
         self.call("pane.graphics.set", serde_json::to_value(overlay)?)

@@ -41,7 +41,13 @@ pub fn run() -> Result<()> {
     let mut stdout = std::io::stdout();
     let pump = InputPump::spawn();
 
-    let cell = measure_cell_size(&mut stdout, || pump.try_next(), CELL_SIZE_TIMEOUT);
+    let cell = measure_cell_size(
+        &client,
+        targets.first(),
+        &mut stdout,
+        || pump.try_next(),
+        CELL_SIZE_TIMEOUT,
+    );
 
     // Paint every label, remembering which panes we touched so cleanup is exact.
     let mut painted: Vec<String> = Vec::with_capacity(targets.len());
@@ -72,11 +78,23 @@ pub fn run() -> Result<()> {
 }
 
 /// Measures the host cell or falls back without leaving text on the popup's visible PTY.
-fn measure_cell_size<W, F>(out: &mut W, next_byte: F, timeout: Duration) -> CellSize
+fn measure_cell_size<W, F>(
+    client: &HerdrClient,
+    target: Option<&Target>,
+    out: &mut W,
+    next_byte: F,
+    timeout: Duration,
+) -> CellSize
 where
     W: Write,
     F: FnMut() -> Option<u8>,
 {
+    // Herdr 0.9 does not reconcile pixel geometry after plugin.pane.open. A zero-delta
+    // resize of a real target pane also initializes the popup, so its PTY can answer CSI 16 t.
+    // Keep this best-effort: older hosts can still answer the query without the workaround.
+    if let Some(target) = target {
+        let _ = client.refresh_geometry(&target.pane_id.0);
+    }
     cellsize::measure_via(out, next_byte, timeout).unwrap_or(FALLBACK_CELL_SIZE)
 }
 
@@ -223,10 +241,92 @@ mod tests {
     }
 
     #[test]
+    fn popup_geometry_is_refreshed_before_querying_cell_size() {
+        use std::io::{BufRead, BufReader};
+        use std::os::unix::net::UnixListener;
+        use std::sync::{
+            atomic::{AtomicBool, Ordering},
+            Arc,
+        };
+
+        let path = std::env::temp_dir().join(format!("hop-geometry-{}", std::process::id()));
+        let listener = UnixListener::bind(&path).unwrap();
+        let resized = Arc::new(AtomicBool::new(false));
+        let ready = resized.clone();
+        let server = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut line = String::new();
+            BufReader::new(&mut stream).read_line(&mut line).unwrap();
+            let request: serde_json::Value = serde_json::from_str(&line).unwrap();
+            assert_eq!(request["method"], "pane.resize");
+            assert_eq!(
+                request["params"],
+                serde_json::json!({
+                    "pane_id": "w:p1", "direction": "right", "amount": 0.0
+                })
+            );
+            ready.store(true, Ordering::SeqCst);
+            stream.write_all(b"{\"result\":{}}\n").unwrap();
+        });
+        let mut reply = b"\x1b[6;38;16t".iter().copied();
+        let mut surface = Vec::new();
+        let cell = measure_cell_size(
+            &HerdrClient::new(&path),
+            Some(&targets()[0]),
+            &mut surface,
+            || {
+                if resized.load(Ordering::SeqCst) {
+                    reply.next()
+                } else {
+                    None
+                }
+            },
+            Duration::from_millis(20),
+        );
+        assert_eq!(
+            cell,
+            CellSize {
+                width_px: 16,
+                height_px: 38
+            }
+        );
+        assert_eq!(surface, cellsize::QUERY_CELL_SIZE);
+        server.join().unwrap();
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn failed_geometry_refresh_still_queries_the_pty() {
+        let mut reply = b"\x1b[6;38;16t".iter().copied();
+        let mut surface = Vec::new();
+        let cell = measure_cell_size(
+            &HerdrClient::new("/nonexistent-hop-socket"),
+            Some(&targets()[0]),
+            &mut surface,
+            || reply.next(),
+            Duration::from_millis(20),
+        );
+        assert_eq!(
+            cell,
+            CellSize {
+                width_px: 16,
+                height_px: 38
+            }
+        );
+        assert_eq!(surface, cellsize::QUERY_CELL_SIZE);
+    }
+
+    #[test]
     fn cell_size_timeout_keeps_popup_surface_blank() {
         let mut surface = Vec::new();
 
-        let cell = measure_cell_size(&mut surface, || None, Duration::ZERO);
+        let cell = measure_cell_size(
+            &HerdrClient::new("/nonexistent-hop-socket"),
+            None,
+            &mut surface,
+            || None,
+            Duration::ZERO,
+        );
 
         assert_eq!(cell, FALLBACK_CELL_SIZE);
         assert_eq!(surface, cellsize::QUERY_CELL_SIZE);
